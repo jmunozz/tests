@@ -16,26 +16,31 @@ static int count_pipes(char *str)
 }
 
 
-static int	**build_pipes(int pipes)
+static int	**build_pipes(int **old_tab, int pipes, int mode)
 {
-	int		**tab;
-	int		n;
+	int				**tab;
+	static int		n;
 
-	n = -1;;
-	tab = (int**)malloc(sizeof(int*) * (pipes));
-	while (++n < pipes)
-		tab[n] = (int*)malloc(sizeof(int) * 2);
-	n = -1;
-	while (++n < pipes)
+	if (mode == 0)
 	{
-		printf("on construit un pipe  = %d\n", n);
-		pipe(tab[n]);
+		n = -1;
+		tab = (int**)malloc(sizeof(int*) * (pipes));
+		while (++n < pipes)
+			tab[n] = (int*)malloc(sizeof(int) * 2);
+		n = -1;
+	}
+	else 
+	{
+		tab = old_tab;
+		if (++n < pipes)
+		{
+			printf("===== N vaut %d\n", n);
+			printf("on construit un pipe  = %d\n", n);
+			pipe(tab[n]);
+		}
 	}
 	return (tab);
 }
-
-
-
 
 int main(int ac , char **av, char **env)
 {
@@ -46,14 +51,18 @@ int main(int ac , char **av, char **env)
 	int 	son_id;
 	int		n;
 	int		*tab_pid;
+	int		status;
+	int		i;
 
 	all = ft_strsplit(av[1], '|');
+	n = 0;
+	i = 0;
+	son_id = 0;
 	if (ac > 1)
 	{
-		son_id = 0;
 		pipes = count_pipes(av[1]);
-		tab = build_pipes(pipes);		
-		n = 0;
+		tab = build_pipes(NULL, pipes, 0);		
+		tab = build_pipes(tab, pipes, 1);		
 		tab_pid = ft_add_tabi(NULL, 0);
 		tab_pid[0] = 1;
 		while (n <= pipes + 1)
@@ -62,8 +71,20 @@ int main(int ac , char **av, char **env)
 			{
 				son_id += (!n) ? 0 : 1;
 				tab_pid = ft_add_tabi(tab_pid, son_id + 1);
+				printf("on fork le fils %d pour n = %d\n", son_id, n);
 				tab_pid[son_id] = fork();
 				command = ft_strsplit(all[son_id], ' ');
+				if (tab_pid[son_id] && son_id != pipes)
+				{
+					printf("on appelle la fonction creation pipe\n");
+					tab = build_pipes(tab, pipes, 1);
+				}
+				if (tab_pid[son_id] && son_id != 0)
+				{
+					close(tab[son_id - 1][0]);
+					close(tab[son_id - 1][1]);
+					printf("Fermeture du pipe  %d\n", son_id - 1);
+				}
 			}
 			else if (n == pipes + 1 && !tab_pid[son_id])
 			{	
@@ -92,6 +113,7 @@ int main(int ac , char **av, char **env)
 					launch_bin(command, env);
 				}
 			}
+
 			n++;
 		}
 		n = -1;
@@ -101,11 +123,12 @@ int main(int ac , char **av, char **env)
 			{
 				waitpid(tab_pid[n], NULL, 0);
 				printf("Le fils %d s'est termine\n", tab_pid[n]);
-				if (n < pipes)
-				{
-					close(tab[n][1]);
-					close(tab[n][0]);
-				}
+				/*		if (n < pipes)
+						{
+						close(tab[n][1]);
+						close(tab[n][0]);
+						printf("Fermeture du pipe %d\n", n);
+						}*/
 			}
 		}
 	}
