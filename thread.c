@@ -1,11 +1,6 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <stdlib.h>
+#include "thread.h"
 
-typedef int	t_pipe[2];
-
-int count_pipes(char *str)
+static int count_pipes(char *str)
 {
 	int i;
 
@@ -16,38 +11,50 @@ int count_pipes(char *str)
 			i++;
 		str++;
 	}
+	printf("pipes_nb = %d\n", i);
 	return (i);
 }
 
-int main(int ac , char **av)
+
+static int	**build_pipes(int pipes)
 {
+	int		**tab;
+	int		n;
+
+	n = -1;;
+	tab = (int**)malloc(sizeof(int*) * (pipes));
+	while (++n < pipes)
+		tab[n] = (int*)malloc(sizeof(int) * 2);
+	n = -1;
+	while (++n < pipes)
+	{
+		printf("on construit un pipe  = %d\n", n);
+		pipe(tab[n]);
+	}
+	return (tab);
+}
+
+
+
+
+int main(int ac , char **av, char **env)
+{
+	char	**all;
+	char	**command;
 	int		pipes;
-	int 	p;
 	pid_t	pid;
 	int		**tab;
 	int 	son_id;
-	char 	c;
 	int		n;
 
-
+	all = ft_strsplit(av[1], '|');
 	pid = 1;
 	if (ac > 1)
 	{
 		n = -1;;
 		son_id = -1;
 		pipes = count_pipes(av[1]);
-		printf("pipes_nb = %d\n", pipes);
-		tab = (int**)malloc(sizeof(int*) * (pipes));
-		while (++n < pipes)
-			tab[n] = (int*)malloc(sizeof(int) * 2);
-		n = -1;
-		while (++n < pipes)
-		{
-			printf("on construit un pipe  = %d\n", n);
-			pipe(tab[n]);
-		}
-	
-		p = pipes;
+		tab = build_pipes(pipes);		
 		n = 0;
 		while (n <= pipes + 1)
 		{
@@ -55,6 +62,7 @@ int main(int ac , char **av)
 			{
 				pid = fork();
 				son_id++;
+				command = ft_strsplit(all[son_id], ' ');
 			}
 			else if (n == pipes + 1 && !pid)
 			{	
@@ -62,27 +70,25 @@ int main(int ac , char **av)
 				printf("mon pere est %d\n", getppid());
 				if (son_id == 0)
 				{
-					c = 'a';
 					close(tab[son_id][0]);
-					write(tab[son_id][1], &c, 1);
+					dup2(tab[son_id][1], STDOUT_FILENO);
+					launch_bin(command, env);
 				}
 				else
 				{
-					if (read(tab[son_id - 1][0], &c, 1) == -1)
-						exit(-1);
-					else
-					{
-						printf("le caractere : %c a ete lu par le fils numero %d\n", c, son_id);
-						if (son_id < pipes)
-							write(tab[son_id][1], &c, 1);
-					}
+					if (son_id < pipes)
+						dup2(tab[son_id][1], STDOUT_FILENO);
+					dup2(tab[son_id - 1][0], STDIN_FILENO);
+					launch_bin(command, env);
+					printf("commande effectuee");
 				}
 			}
 			n++;
 		}
+		n = -1;
 		if (pid)
 		{
-			while (p-- >= 0)
+			while (++n <= pipes)
 			{
 				wait(NULL);
 				printf("Un fils s'est termine\n");
