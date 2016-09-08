@@ -42,28 +42,27 @@ int main(int ac , char **av, char **env)
 	char	**all;
 	char	**command;
 	int		pipes;
-	pid_t	pid;
 	int		**tab;
 	int 	son_id;
 	int		n;
 	int		*tab_pid;
 
 	all = ft_strsplit(av[1], '|');
-	pid = 1;
 	if (ac > 1)
 	{
-		n = -1;;
-		son_id = -1;
+		son_id = 0;
 		pipes = count_pipes(av[1]);
 		tab = build_pipes(pipes);		
 		n = 0;
 		tab_pid = ft_add_tabi(NULL, 0);
+		tab_pid[0] = 1;
 		while (n <= pipes + 1)
 		{
 			if (n <= pipes && tab_pid[son_id])
 			{
-				tab_pid = ft_add_tabi(tab_pid, son_id + 2);
-				tab_pid[++son_id] = fork();
+				son_id += (!n) ? 0 : 1;
+				tab_pid = ft_add_tabi(tab_pid, son_id + 1);
+				tab_pid[son_id] = fork();
 				command = ft_strsplit(all[son_id], ' ');
 			}
 			else if (n == pipes + 1 && !tab_pid[son_id])
@@ -91,13 +90,12 @@ int main(int ac , char **av, char **env)
 					close(tab[son_id - 1][0]);
 					close(tab[son_id - 1][1]);
 					launch_bin(command, env);
-					printf("commande effectuee");
 				}
 			}
 			n++;
 		}
 		n = -1;
-		if (pid)
+		if (tab_pid[son_id])
 		{
 			while (++n <= pipes)
 			{
