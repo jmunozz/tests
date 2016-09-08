@@ -46,6 +46,7 @@ int main(int ac , char **av, char **env)
 	int		**tab;
 	int 	son_id;
 	int		n;
+	int		*tab_pid;
 
 	all = ft_strsplit(av[1], '|');
 	pid = 1;
@@ -56,29 +57,39 @@ int main(int ac , char **av, char **env)
 		pipes = count_pipes(av[1]);
 		tab = build_pipes(pipes);		
 		n = 0;
+		tab_pid = ft_add_tabi(NULL, 0);
 		while (n <= pipes + 1)
 		{
-			if (n <= pipes && pid)
+			if (n <= pipes && tab_pid[son_id])
 			{
-				pid = fork();
-				son_id++;
+				tab_pid = ft_add_tabi(tab_pid, son_id + 2);
+				tab_pid[++son_id] = fork();
 				command = ft_strsplit(all[son_id], ' ');
 			}
-			else if (n == pipes + 1 && !pid)
+			else if (n == pipes + 1 && !tab_pid[son_id])
 			{	
 				printf("je suis le fils numero %d, mon pid est %d\n", son_id, getpid());
 				printf("mon pere est %d\n", getppid());
+				printf("___COMMANDE___\n");
+				ft_printtab(command);
 				if (son_id == 0)
 				{
 					close(tab[son_id][0]);
 					dup2(tab[son_id][1], STDOUT_FILENO);
+					close(tab[son_id][1]);
 					launch_bin(command, env);
 				}
 				else
 				{
 					if (son_id < pipes)
+					{
 						dup2(tab[son_id][1], STDOUT_FILENO);
+						close(tab[son_id][0]);
+						close(tab[son_id][1]);
+					}
 					dup2(tab[son_id - 1][0], STDIN_FILENO);
+					close(tab[son_id - 1][0]);
+					close(tab[son_id - 1][1]);
 					launch_bin(command, env);
 					printf("commande effectuee");
 				}
@@ -90,8 +101,13 @@ int main(int ac , char **av, char **env)
 		{
 			while (++n <= pipes)
 			{
-				wait(NULL);
-				printf("Un fils s'est termine\n");
+				waitpid(tab_pid[n], NULL, 0);
+				printf("Le fils %d s'est termine\n", tab_pid[n]);
+				if (n < pipes)
+				{
+					close(tab[n][1]);
+					close(tab[n][0]);
+				}
 			}
 		}
 	}
