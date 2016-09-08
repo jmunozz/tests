@@ -6,7 +6,7 @@
 /*   By: jmunoz <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/02/18 08:21:22 by jmunoz            #+#    #+#             */
-/*   Updated: 2016/05/12 11:06:27 by jmunoz           ###   ########.fr       */
+/*   Updated: 2016/09/08 18:51:05 by jmunoz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,5 +105,7 @@ char				*ft_path_back(char *str, char c);
 int					ft_strstr_count(char *big, char *little);
 int					ft_strstrn_count(char *big, char *little, int size);
 char				**ft_tabdup(char **tab);
+void				ft_printtab(char **tab);
+int					*ft_add_tabi(int *tab, int size_tab);
 
 #endif

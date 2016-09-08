@@ -6,7 +6,7 @@
 #    By: jmunoz <marvin@42.fr>                      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2016/03/06 15:04:00 by jmunoz            #+#    #+#              #
-#    Updated: 2016/05/12 11:05:46 by jmunoz           ###   ########.fr        #
+#    Updated: 2016/09/08 18:50:03 by jmunoz           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -88,7 +88,9 @@ SRC=	ft_memset.c \
 	 ft_path_back.c \
 	 ft_strstr_count.c \
 	 ft_strstrn_count.c \
-	 ft_tabdup.c
+	 ft_tabdup.c \
+	 ft_printtab.c \
+	 ft_add_tabi.c
 
 OBJ=$(SRC:.c=.o)
 NAME=libft.a
